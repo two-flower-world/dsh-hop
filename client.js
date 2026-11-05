@@ -33,11 +33,9 @@ window.__ModuleLoader__.load({
     }
 
     async function request(name, init) {
-      const response = await fetch(`api/hop/${name}`, {
-        credentials: 'same-origin',
-        headers: { 'content-type': 'application/json' },
-        ...init
-      })
+      const options = { credentials: 'same-origin', method: 'GET', ...(init || {}) }
+      if (options.body) options.headers = { 'content-type': 'application/json' }
+      const response = await fetch(`api/hop/${name}`, options)
       const text = await response.text()
       let data
       try {
@@ -45,7 +43,11 @@ window.__ModuleLoader__.load({
       } catch {
         data = { ok: false, error: text || `HTTP ${response.status}` }
       }
-      if (!response.ok && !data.error) data.error = `HTTP ${response.status}`
+      if (!response.ok) {
+        data.ok = false
+        const detail = data.error || text || ''
+        data.error = detail ? `HTTP ${response.status}：${detail}` : `HTTP ${response.status}`
+      }
       return data
     }
 
@@ -186,7 +188,7 @@ window.__ModuleLoader__.load({
         setBusy('save')
         setFlash({ kind: 'info', text: '正在检测仓库…' })
         try {
-          const result = await request('setup', { method: 'POST', body: JSON.stringify({ relay }) })
+          const result = await request(`setup?relay=${encodeURIComponent(relay)}`)
           if (result.ok) {
             setFlash({ kind: 'ok', text: result.text })
             await refresh()
@@ -206,7 +208,7 @@ window.__ModuleLoader__.load({
       const makeKey = async () => {
         setBusy('key')
         try {
-          const result = await request('ssh-key', { method: 'POST' })
+          const result = await request('ssh-key')
           if (result.ok) {
             setPublicKey(result.publicKey)
             setShowKey(true)
@@ -241,7 +243,7 @@ window.__ModuleLoader__.load({
         setBusy(project.id)
         setFlash({ kind: 'info', text: `正在下载 ${project.name}…` })
         try {
-          const started = await api('pull', { method: 'POST', body: JSON.stringify({ project: project.name }) })
+          const started = await api(`pull?project=${encodeURIComponent(project.name)}`)
           for (let tick = 0; tick < 1200; tick += 1) {
             await sleep(1500)
             const job = await api(`job?id=${encodeURIComponent(started.jobId)}`)

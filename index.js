@@ -855,6 +855,20 @@ async function setup(ctx, agent, options) {
 /* 给界面用的 JSON 接口                                                 */
 /* ------------------------------------------------------------------ */
 
+/** 同时接受 query 和 JSON body，避免依赖 POST。 */
+async function readInput(request) {
+  const url = new URL(request.url)
+  const input = Object.fromEntries(url.searchParams.entries())
+  if (request.method === 'GET' || request.method === 'HEAD') return input
+  try {
+    const body = await request.json()
+    if (body && typeof body === 'object') return { ...input, ...body }
+  } catch {
+    /* 没有 body 就只用 query */
+  }
+  return input
+}
+
 function jsonResponse(value, status = 200) {
   return new Response(JSON.stringify(value), {
     status,
@@ -1101,71 +1115,56 @@ export function apply(ctx) {
   }
 
   ctx.inject(['connection'], (scoped) => {
-    scoped.connection.fetch.register({
-      path: '/api/hop/state',
-      methods: ['GET'],
-      requestBody: 'buffered',
-      fetch: async () => jsonResponse(await hopState(ctx))
-    })
-    scoped.connection.fetch.register({
-      path: '/api/hop/doctor',
-      methods: ['GET'],
-      requestBody: 'buffered',
-      fetch: async () => jsonResponse(await hopDoctor(ctx))
-    })
-    scoped.connection.fetch.register({
-      path: '/api/hop/ssh-key',
-      methods: ['POST'],
-      requestBody: 'buffered',
-      fetch: async () => {
-        try {
-          const key = await ensureSshKey()
-          return jsonResponse({ ok: true, publicKey: key.publicKey, path: key.path })
-        } catch (error) {
-          return jsonResponse({ ok: false, error: String(error?.message ?? error) }, 500)
-        }
+    const route = (path, handler) => {
+      scoped.connection.fetch.register({
+        path,
+        methods: ['GET', 'POST'],
+        requestBody: 'buffered',
+        fetch: handler
+      })
+    }
+
+    route('/api/hop/state', async () => jsonResponse(await hopState(ctx)))
+    route('/api/hop/doctor', async () => jsonResponse(await hopDoctor(ctx)))
+    route('/api/hop/ssh-key', async () => {
+      try {
+        const key = await ensureSshKey()
+        return jsonResponse({ ok: true, publicKey: key.publicKey, path: key.path })
+      } catch (error) {
+        return jsonResponse({ ok: false, error: String(error?.message ?? error) })
       }
     })
-    scoped.connection.fetch.register({
-      path: '/api/hop/setup',
-      methods: ['POST'],
-      requestBody: 'buffered',
-      fetch: async (request) => {
-        try {
-          const body = await request.json()
-          const text = await setup(ctx, null, body)
-          return jsonResponse({ ok: true, text, doctor: await hopDoctor(ctx) })
-        } catch (error) {
-          const message = String(error?.message ?? error)
-          const hint = classifyGitFailure(message)
-          return jsonResponse({ ok: false, error: message, hint, provider: providerOf(body?.relay ?? ''), protocol: protocolOf(body?.relay ?? '') })
-        }
+    route('/api/hop/setup', async (request) => {
+      const input = await readInput(request)
+      const relay = String(input.relay ?? '')
+      try {
+        const text = await setup(ctx, null, { relay })
+        return jsonResponse({ ok: true, text, doctor: await hopDoctor(ctx) })
+      } catch (error) {
+        const message = String(error?.message ?? error)
+        return jsonResponse({
+          ok: false,
+          error: message,
+          hint: classifyGitFailure(message),
+          provider: providerOf(relay),
+          protocol: protocolOf(relay)
+        })
       }
     })
-    scoped.connection.fetch.register({
-      path: '/api/hop/pull',
-      methods: ['POST'],
-      requestBody: 'buffered',
-      fetch: async (request) => {
-        try {
-          const body = await request.json()
-          const job = startPullJob(ctx, { project: body.project, dest: body.dest })
-          return jsonResponse({ ok: true, jobId: job.id })
-        } catch (error) {
-          return jsonResponse({ ok: false, error: String(error?.message ?? error) }, 400)
-        }
+    route('/api/hop/pull', async (request) => {
+      const input = await readInput(request)
+      try {
+        const job = startPullJob(ctx, { project: input.project, dest: input.dest })
+        return jsonResponse({ ok: true, jobId: job.id })
+      } catch (error) {
+        return jsonResponse({ ok: false, error: String(error?.message ?? error) })
       }
     })
-    scoped.connection.fetch.register({
-      path: '/api/hop/job',
-      methods: ['GET'],
-      requestBody: 'buffered',
-      fetch: async (request) => {
-        const id = new URL(request.url).searchParams.get('id') ?? ''
-        const job = pullJobs.get(id)
-        if (!job) return jsonResponse({ ok: false, error: '任务不存在' }, 404)
-        return jsonResponse({ ok: true, ...job })
-      }
+    route('/api/hop/job', async (request) => {
+      const id = new URL(request.url).searchParams.get('id') ?? ''
+      const job = pullJobs.get(id)
+      if (!job) return jsonResponse({ ok: false, error: '任务不存在' })
+      return jsonResponse({ ok: true, ...job })
     })
   }, 'dsh-hop: panel routes')
 

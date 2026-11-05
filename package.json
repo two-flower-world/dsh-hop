@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-hop",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "跨机接力：把项目连同会话、待办和附件带到另一台装了 DSH 的电脑上继续。",
   "type": "module",
   "license": "MIT",
