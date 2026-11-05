@@ -88,6 +88,8 @@ Click **Set repository** in the panel, or run:
 
 Saving clones once to verify. Authentication errors surface as git's own message (usually 401 / 403 / `Permission denied`) — fix step 2 and retry.
 
+The panel lets you pick Gitee or GitHub and SSH or HTTPS; when the repository is unreachable it offers a **generate key** button, a copyable public key, and a link to the platform's settings page.
+
 Every project on this machine then shares that relay — no per-project setup.
 
 ## Interface

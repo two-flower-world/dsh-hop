@@ -830,6 +830,9 @@ async function status(ctx, agent, options = {}) {
 
 async function setup(ctx, agent, options) {
   if (!options.relay) throw new Error('用法：/hop setup <私有仓库地址> [下载目录]')
+  // 先验证能不能访问，失败就不要把坏地址写进配置
+  const probe = await probeRepo(options.relay)
+  if (!probe.ok) throw new Error(probe.message)
   const patch = { relay: options.relay, device: deviceName() }
   if (options.dir) patch.projectsDir = path.resolve(options.dir)
   await saveGlobal(patch)
@@ -888,6 +891,100 @@ async function hopState(ctx) {
       .sort((left, right) => String(right.updatedAt).localeCompare(String(left.updatedAt)))
   } catch (error) {
     view.error = String(error?.message ?? error)
+  }
+  return view
+}
+
+/* ------------------------------------------------------------------ */
+/* 平台识别 / 连通性检测 / SSH 密钥                                      */
+/* ------------------------------------------------------------------ */
+
+const PROVIDER_HOSTS = {
+  github: 'github.com',
+  gitee: 'gitee.com'
+}
+
+function protocolOf(url) {
+  return /^(git@|ssh:|git\+ssh)/.test(String(url)) ? 'ssh' : 'https'
+}
+
+function providerOf(url) {
+  const text = String(url)
+  if (text.includes('github.com')) return 'github'
+  if (text.includes('gitee.com')) return 'gitee'
+  return 'other'
+}
+
+function classifyGitFailure(message) {
+  const text = String(message).toLowerCase()
+  if (/permission denied|publickey|authentication failed|could not read username|terminal prompts disabled|\b401\b|\b403\b/.test(text)) return 'auth'
+  if (/repository .*not found|does not exist|not found|\b404\b/.test(text)) return 'notfound'
+  if (/could not resolve host|connection (timed out|refused)|network is unreachable|timeout/.test(text)) return 'network'
+  return 'unknown'
+}
+
+/** 只读探测：能不能访问这个仓库（不做任何写入）。 */
+async function probeRepo(url) {
+  try {
+    await runGit(['ls-remote', '--heads', url], os.tmpdir())
+    return { ok: true }
+  } catch (error) {
+    const message = String(error?.message ?? error)
+    return { ok: false, message, kind: classifyGitFailure(message) }
+  }
+}
+
+async function sshKeyInfo() {
+  const dir = path.join(os.homedir(), '.ssh')
+  for (const name of ['id_ed25519.pub', 'id_ecdsa.pub', 'id_rsa.pub']) {
+    const file = path.join(dir, name)
+    if (!existsSync(file)) continue
+    try {
+      const publicKey = (await fs.readFile(file, 'utf8')).trim()
+      if (publicKey.length > 0) return { exists: true, path: file, publicKey }
+    } catch {
+      /* 读不到就当没有 */
+    }
+  }
+  return { exists: false, path: path.join(dir, 'id_ed25519.pub') }
+}
+
+/** 没有密钥就生成一把 ed25519；已有则直接返回。 */
+async function ensureSshKey() {
+  const current = await sshKeyInfo()
+  if (current.exists) return current
+  const dir = path.join(os.homedir(), '.ssh')
+  await fs.mkdir(dir, { recursive: true, mode: 0o700 })
+  const file = path.join(dir, 'id_ed25519')
+  await new Promise((resolve, reject) => {
+    execFile('ssh-keygen', ['-t', 'ed25519', '-N', '', '-C', 'dsh-hop', '-f', file], (error, _stdout, stderr) => {
+      if (error) reject(new Error(String(stderr || error.message).trim()))
+      else resolve()
+    })
+  })
+  const created = await sshKeyInfo()
+  if (!created.exists) throw new Error('ssh-keygen 执行成功但没有找到公钥')
+  return created
+}
+
+/** 面板用的体检结果。 */
+async function hopDoctor(ctx) {
+  const global = await loadGlobal()
+  const key = await sshKeyInfo()
+  const view = {
+    configured: Boolean(global.relay),
+    relay: global.relay ?? null,
+    provider: global.relay ? providerOf(global.relay) : null,
+    protocol: global.relay ? protocolOf(global.relay) : null,
+    sshKey: { exists: key.exists, path: key.path },
+    reachable: null
+  }
+  if (!global.relay) return view
+  const probe = await probeRepo(global.relay)
+  view.reachable = probe.ok
+  if (!probe.ok) {
+    view.error = short(probe.message, 500)
+    view.hint = probe.kind
   }
   return view
 }
@@ -1011,15 +1108,37 @@ export function apply(ctx) {
       fetch: async () => jsonResponse(await hopState(ctx))
     })
     scoped.connection.fetch.register({
+      path: '/api/hop/doctor',
+      methods: ['GET'],
+      requestBody: 'buffered',
+      fetch: async () => jsonResponse(await hopDoctor(ctx))
+    })
+    scoped.connection.fetch.register({
+      path: '/api/hop/ssh-key',
+      methods: ['POST'],
+      requestBody: 'buffered',
+      fetch: async () => {
+        try {
+          const key = await ensureSshKey()
+          return jsonResponse({ ok: true, publicKey: key.publicKey, path: key.path })
+        } catch (error) {
+          return jsonResponse({ ok: false, error: String(error?.message ?? error) }, 500)
+        }
+      }
+    })
+    scoped.connection.fetch.register({
       path: '/api/hop/setup',
       methods: ['POST'],
       requestBody: 'buffered',
       fetch: async (request) => {
         try {
           const body = await request.json()
-          return jsonResponse({ ok: true, text: await setup(ctx, null, body) })
+          const text = await setup(ctx, null, body)
+          return jsonResponse({ ok: true, text, doctor: await hopDoctor(ctx) })
         } catch (error) {
-          return jsonResponse({ ok: false, error: String(error?.message ?? error) }, 400)
+          const message = String(error?.message ?? error)
+          const hint = classifyGitFailure(message)
+          return jsonResponse({ ok: false, error: message, hint, provider: providerOf(body?.relay ?? ''), protocol: protocolOf(body?.relay ?? '') })
         }
       }
     })
