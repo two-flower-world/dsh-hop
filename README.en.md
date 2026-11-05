@@ -4,7 +4,7 @@
 
 English | [中文](README.md)
 
-**Plugin version** `0.4.0` · **Requires DSH** `>= 0.2.1-rc.5`
+**Plugin version** `0.4.1` · **Requires DSH** `>= 0.2.1-rc.5`
 
 One private repository holds every project. `/hop push` on the work machine, one click on **Download** at home — sessions, todos, attachments and code travel together, and the conversation continues without re-briefing the model.
 
