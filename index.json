@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "title": {
+    "zh": "spark 的 DSH 插件",
+    "en": "Spark's DSH plugins"
+  },
+  "description": {
+    "zh": "跨机接力等自定义 DSH 插件。",
+    "en": "Custom DSH plugins, including cross-machine relay."
+  },
+  "metadata": {
+    "categories": {
+      "workflow": {
+        "title": {
+          "zh": "工作流",
+          "en": "Workflow"
+        }
+      }
+    },
+    "labels": {
+      "cross-machine": {
+        "title": {
+          "zh": "跨设备",
+          "en": "Cross-machine"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "dsh-plugin-hop",
+      "title": {
+        "zh": "跨机接力",
+        "en": "Cross-machine Relay"
+      },
+      "description": {
+        "zh": "把项目、会话历史、待办和附件通过私有 git 仓库带到另一台装了 DSH 的电脑上继续。",
+        "en": "Carry a project and its session history between computers through a private git repository."
+      },
+      "icon": "icon.svg",
+      "author": "spark",
+      "homepage": "https://gitee.com/two-flower-world/dsh-hop",
+      "repository": {
+        "url": "https://gitee.com/two-flower-world/dsh-hop"
+      },
+      "metadata": {
+        "category": "workflow",
+        "labels": [
+          "cross-machine"
+        ],
+        "keywords": [
+          "session",
+          "sync",
+          "handoff",
+          "跨机"
+        ]
+      },
+      "versions": [
+        {
+          "version": "0.3.0",
+          "publishTimestamp": 1793841626,
+          "source": {
+            "type": "git",
+            "url": "https://gitee.com/two-flower-world/dsh-hop",
+            "commit": "48d86fc90eed69e2f9f3763637284b14cd0131da"
+          },
+          "engines": {
+            "dsh": ">=0.2.1-rc.5"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+- insert:
+    - id: dsh-hop
+      name: 'dsh-plugin-hop'
+      config: {}

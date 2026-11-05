@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Cross-machine Relay",
+    "description": "Carry a project, its session history, todos and attachments to another computer running DSH through a private git repository."
+  }
+}
