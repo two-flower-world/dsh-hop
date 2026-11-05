@@ -35,6 +35,47 @@ DSH 的会话是**事件日志**：每一轮对话、工具调用、待办（`to
 
 > 令牌不要贴进聊天：交给 `git credential` / keychain，插件只记仓库地址。
 
+## 界面
+
+侧边栏位置：
+
+<img src="docs/images/sidebar.png" width="240" alt="侧边栏的接力图标">
+
+第一次用先填仓库地址：
+
+<img src="docs/images/setup.png" width="680" alt="设置接力仓库">
+
+之后就是项目清单，点「下载」：
+
+<img src="docs/images/panel.png" width="720" alt="接力面板">
+
+> 上图为示意图，实际界面跟随主题的深浅色。
+
+## 凭据怎么配（别人最常问）
+
+插件**只保存仓库地址，不保存任何令牌**。能不能用，取决于这台电脑能不能直接 `git clone` 那个仓库。
+
+**SSH（推荐）**
+
+```bash
+ssh-keygen -t ed25519 -C "you@example.com"
+# 把 ~/.ssh/id_ed25519.pub 贴到 GitHub → Settings → SSH and GPG keys
+ssh -T git@github.com          # 看到 successfully authenticated 就配好了
+```
+
+Gitee 同理：公钥加到「设置 → SSH 公钥」，测试用 `ssh -T git@gitee.com`。
+
+**HTTPS + 令牌**
+
+```bash
+git config --global credential.helper osxkeychain
+printf 'protocol=https\nhost=github.com\nusername=你的账号\npassword=你的令牌\n\n' | git credential approve
+```
+
+配好后在面板点「保存」，插件会立刻 clone 一次做验证；认证失败会直接把 git 的原始报错显示在面板上（通常是 401/403 或 `Permission denied`）。
+
+> 令牌不要贴进聊天，也不要写进 URL；交给 keychain / SSH agent。
+
 ## 使用
 
 **面板**：左侧「接力」→ 项目清单（绿点=本机已有，灰点=没下载）→ 点「下载」。下载在后台跑，面板会轮询进度，完成后自动刷新。

@@ -35,6 +35,47 @@ You need a **private** repository (GitHub or Gitee) for relay state only, not pr
 
 > Never paste a token into chat: hand it to `git credential` / the keychain. The plugin stores only the repository URL.
 
+## Interface
+
+Where the icon lives:
+
+<img src="docs/images/sidebar.png" width="240" alt="Relay icon in the sidebar">
+
+First run: enter the repository URL.
+
+<img src="docs/images/setup.png" width="680" alt="Set the relay repository">
+
+After that it is a project list — click **Download**:
+
+<img src="docs/images/panel.png" width="720" alt="Relay panel">
+
+> Illustrations; the real UI follows the active light/dark theme.
+
+## Credentials (the most common question)
+
+The plugin stores **only the repository URL — never a token**. What matters is whether this machine can `git clone` that repository directly.
+
+**SSH (recommended)**
+
+```bash
+ssh-keygen -t ed25519 -C "you@example.com"
+# add ~/.ssh/id_ed25519.pub to GitHub → Settings → SSH and GPG keys
+ssh -T git@github.com          # "successfully authenticated" means you are done
+```
+
+Gitee works the same: add the public key under Settings → SSH keys and test with `ssh -T git@gitee.com`.
+
+**HTTPS + token**
+
+```bash
+git config --global credential.helper osxkeychain
+printf 'protocol=https\nhost=github.com\nusername=your-name\npassword=your-token\n\n' | git credential approve
+```
+
+Then press **Save** in the panel: the plugin clones once to verify, and surfaces git's own error (usually 401/403 or `Permission denied`) if credentials are wrong.
+
+> Never paste tokens into chat or into URLs; keep them in the keychain or an SSH agent.
+
 ## Usage
 
 **Panel**: sidebar → **Relay** → the project list (green dot = present here, grey dot = not downloaded) → **Download**. Pulls run in the background; the panel polls progress and refreshes when done.

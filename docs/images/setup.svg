@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="380" viewBox="0 0 1000 380" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif">
+  <rect width="1000" height="380" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="999" height="379" fill="none" stroke="#e5e7eb"/>
+
+  <text x="40" y="62" font-size="22" font-weight="600" fill="#1f2328">跨机接力</text>
+
+  <rect x="790" y="38" width="72" height="34" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="826" y="60" font-size="13" fill="#1f2328" text-anchor="middle">刷新</text>
+
+  <rect x="874" y="38" width="100" height="34" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="924" y="60" font-size="13" fill="#1f2328" text-anchor="middle">设置仓库</text>
+
+  <text x="40" y="98" font-size="13" fill="#6b7280">还没有配置接力仓库</text>
+
+  <rect x="40" y="118" width="920" height="76" rx="10" fill="#ffffff" stroke="#e5e7eb"/>
+  <rect x="58" y="140" width="740" height="34" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="72" y="162" font-size="13" fill="#9ca3af">git@github.com:you/dsh-hop-myrepo.git</text>
+  <rect x="812" y="140" width="72" height="34" rx="8" fill="#ffffff" stroke="#4d6bfe"/>
+  <text x="848" y="162" font-size="13" fill="#4d6bfe" text-anchor="middle">保存</text>
+
+  <text x="40" y="232" font-size="13" fill="#6b7280">仓库里还没有项目。在任意项目里运行 /hop push 就会加进来。</text>
+
+  <text x="40" y="292" font-size="12" fill="#9ca3af">需要一个私有仓库（GitHub / Gitee），并且这台电脑能直接 git clone 它：</text>
+  <text x="40" y="314" font-size="12" fill="#9ca3af">SSH key 或 credential helper 配好，插件只保存仓库地址，不保存令牌。</text>
+
+  <text x="944" y="356" font-size="11" fill="#9ca3af" text-anchor="end">示意图</text>
+</svg>

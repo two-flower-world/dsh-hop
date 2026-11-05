@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif">
+  <rect width="1000" height="560" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="999" height="559" fill="none" stroke="#e5e7eb"/>
+
+  <text x="40" y="62" font-size="22" font-weight="600" fill="#1f2328">跨机接力</text>
+
+  <rect x="790" y="38" width="72" height="34" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="826" y="60" font-size="13" fill="#1f2328" text-anchor="middle">刷新</text>
+
+  <rect x="874" y="38" width="100" height="34" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="924" y="60" font-size="13" fill="#1f2328" text-anchor="middle">设置仓库</text>
+
+  <text x="40" y="98" font-size="13" fill="#6b7280">https://gitee.com/two-flower-world/dsh-hop-myrepo.git</text>
+
+  <rect x="40" y="120" width="920" height="82" rx="12" fill="#ffffff" stroke="#e5e7eb"/>
+  <circle cx="66" cy="150" r="4" fill="#16a34a"/>
+  <text x="82" y="155" font-size="15" font-weight="600" fill="#1f2328">biao-live-v3</text>
+  <text x="82" y="176" font-size="12" fill="#6b7280">1 个会话 · 155 个附件 · 2026-11-05 00:18</text>
+  <text x="82" y="192" font-size="12" fill="#9ca3af">/Users/you/dsh-projects/biao-live-v3</text>
+  <rect x="864" y="144" width="72" height="34" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="900" y="166" font-size="13" fill="#1f2328" text-anchor="middle">更新</text>
+
+  <rect x="40" y="214" width="920" height="74" rx="12" fill="#ffffff" stroke="#e5e7eb"/>
+  <circle cx="66" cy="244" r="4" fill="#9ca3af"/>
+  <text x="82" y="249" font-size="15" font-weight="600" fill="#1f2328">douyinLive</text>
+  <text x="82" y="270" font-size="12" fill="#6b7280">1 个会话 · 3 个附件 · 2026-11-04 22:41 · 未下载</text>
+  <rect x="864" y="258" width="72" height="30" rx="8" fill="#4d6bfe"/>
+  <text x="900" y="278" font-size="13" fill="#ffffff" text-anchor="middle">下载</text>
+
+  <rect x="40" y="314" width="920" height="86" rx="10" fill="#f7f8fa" stroke="#e5e7eb"/>
+  <text x="60" y="342" font-size="13" fill="#1f2328">已把「douyinLive」拉到 /Users/you/dsh-projects/douyinLive（旧路径已改写成本机路径）</text>
+  <text x="60" y="364" font-size="13" fill="#1f2328">会话：新建 1，追加 0，未变 0</text>
+  <text x="60" y="386" font-size="13" fill="#1f2328">侧边栏：已挂到项目下，点开就能继续</text>
+
+  <text x="40" y="452" font-size="13" fill="#6b7280">绿点 = 本机已有；灰点 = 还没下载。下载在后台跑，面板会自动刷新。</text>
+
+  <text x="944" y="536" font-size="11" fill="#9ca3af" text-anchor="end">示意图</text>
+</svg>

@@ -35,7 +35,8 @@
     "README.md",
     "LICENSE",
     "README.en.md",
-    "client.js"
+    "client.js",
+    "docs/images/*.png"
   ],
   "dsh": {
     "bundle": {
