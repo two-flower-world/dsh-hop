@@ -17,23 +17,74 @@ DSH 的会话是**事件日志**：每一轮对话、工具调用、待办（`to
 
 ## 安装
 
-1. 把本仓库 clone 到任意目录。
-2. 在 DSH 里让它装：`plugin_manager` 的 `install_bundle`，目标填这个目录。
+1. `git clone <本仓库地址>` 到任意目录。
+2. 在 DSH 里安装：`plugin_manager` → `install_bundle`，目标填这个目录。
 3. 刷新页面（⌘R），侧边栏出现「接力」图标。
 
-## 配置（每台电脑一次）
+## 配置
+
+### 1. 准备一个私有仓库
+
+在 GitHub 或 Gitee 新建一个**私有**仓库，只放接力状态，不放项目代码。例如 `dsh-hop-myrepo`。
+
+### 2. 让这台电脑能直接访问它
+
+如果这台电脑已经配过 git 凭据（`git ls-remote <仓库地址>` 能直接返回且不报错），跳过这一步。
+
+**SSH**
+
+```bash
+ssh-keygen -t ed25519 -C "you@example.com"   # 已有密钥可跳过
+cat ~/.ssh/id_ed25519.pub
+```
+
+把输出的公钥加到平台：
+
+- GitHub：Settings → SSH and GPG keys → New SSH key
+- Gitee：设置 → SSH 公钥
+
+验证：
+
+```bash
+ssh -T git@github.com     # 或 git@gitee.com
+```
+
+> 返回 `successfully authenticated` 或欢迎语即成功；`Permission denied` 说明公钥没加对。
+
+**HTTPS + 令牌**
+
+```bash
+# macOS
+git config --global credential.helper osxkeychain
+# Windows
+git config --global credential.helper manager
+# Linux
+git config --global credential.helper libsecret
+
+printf 'protocol=https\nhost=github.com\nusername=<账号>\npassword=<令牌>\n\n' | git credential approve
+```
+
+Gitee 把 `host` 换成 `gitee.com`。令牌在平台后台生成，GitHub 需要 `repo` 权限，Gitee 需要 `projects` 权限。
+
+验证：
+
+```bash
+git ls-remote <仓库地址>
+```
+
+有 refs 输出、没有报错，就说明这台电脑已经能访问该仓库。
+
+### 3. 填进插件
 
 点面板右上角「设置仓库」，或直接：
 
 ```
-/hop setup git@github.com:you/dsh-hop-myrepo.git
+/hop setup <仓库地址>
 ```
 
+保存时会立刻 clone 一次做验证。认证失败会显示 git 的原始报错（常见 401 / 403 / `Permission denied`），按报错回到第 2 步修正即可。
+
 之后**所有项目**共用这个仓库，不用再配第二次。
-
-需要一个**私有**仓库（GitHub / Gitee 都行），只放接力状态，不放项目代码；两台电脑都能直接 `git clone` 它（SSH key 或 credential helper 已配好）；两台 DSH 版本一致。
-
-> 令牌不要贴进聊天：交给 `git credential` / keychain，插件只记仓库地址。
 
 ## 界面
 
@@ -41,44 +92,19 @@ DSH 的会话是**事件日志**：每一轮对话、工具调用、待办（`to
 
 <img src="docs/images/sidebar.png" width="240" alt="侧边栏的接力图标">
 
-第一次用先填仓库地址：
+第一次使用，先填仓库地址：
 
 <img src="docs/images/setup.png" width="680" alt="设置接力仓库">
 
-之后就是项目清单，点「下载」：
+之后是项目清单，点「下载」：
 
 <img src="docs/images/panel.png" width="720" alt="接力面板">
 
 > 上图为示意图，实际界面跟随主题的深浅色。
 
-## 凭据怎么配（别人最常问）
-
-插件**只保存仓库地址，不保存任何令牌**。能不能用，取决于这台电脑能不能直接 `git clone` 那个仓库。
-
-**SSH（推荐）**
-
-```bash
-ssh-keygen -t ed25519 -C "you@example.com"
-# 把 ~/.ssh/id_ed25519.pub 贴到 GitHub → Settings → SSH and GPG keys
-ssh -T git@github.com          # 看到 successfully authenticated 就配好了
-```
-
-Gitee 同理：公钥加到「设置 → SSH 公钥」，测试用 `ssh -T git@gitee.com`。
-
-**HTTPS + 令牌**
-
-```bash
-git config --global credential.helper osxkeychain
-printf 'protocol=https\nhost=github.com\nusername=你的账号\npassword=你的令牌\n\n' | git credential approve
-```
-
-配好后在面板点「保存」，插件会立刻 clone 一次做验证；认证失败会直接把 git 的原始报错显示在面板上（通常是 401/403 或 `Permission denied`）。
-
-> 令牌不要贴进聊天，也不要写进 URL；交给 keychain / SSH agent。
-
 ## 使用
 
-**面板**：左侧「接力」→ 项目清单（绿点=本机已有，灰点=没下载）→ 点「下载」。下载在后台跑，面板会轮询进度，完成后自动刷新。
+**面板**：左侧「接力」→ 项目清单（绿点=本机已有，灰点=没下载）→ 点「下载」。下载在后台跑，面板轮询进度，完成后自动刷新。
 
 **命令**：
 
@@ -91,7 +117,7 @@ printf 'protocol=https\nhost=github.com\nusername=你的账号\npassword=你的�
 
 `/hop pull` 不给名字时，仓库里只有一个项目就直接拉它；默认下载到 `~/dsh-projects/<项目名>`。
 
-**工具**：`hop_setup`、`hop_push`、`hop_pull`、`hop_list`、`hop_status`——也可以直接说「把这个项目交棒到家里那台」。
+**工具**：`hop_setup`、`hop_push`、`hop_pull`、`hop_list`、`hop_status`——也可以直接说「把这个项目交棒到另一台电脑」。
 
 **子会话**：push 自动带上当前会话派生的所有子代理会话，pull 时按父子顺序重建。
 
@@ -114,23 +140,23 @@ relay 仓库
 
 **代码没带过去？** 项目不是 git 仓库或没有 `origin`，插件会跳过代码同步并在输出里写明。
 
-**路径不一样？** pull 时给目标目录，或直接让它用默认的 `~/dsh-projects/<名字>`；日志里的旧路径会被整串替换。
+**路径不一样？** pull 时给目标目录，或使用默认的 `~/dsh-projects/<名字>`；日志里的旧路径会被整串替换。
 
-**项目根和会话工作目录不一致？** `--project` 只影响代码同步，会话路径以**会话的工作目录**为准；想让路径完全对齐，最好让会话工作目录就是项目目录。
+**项目根和会话工作目录不一致？** `--project` 只影响代码同步，会话路径以**会话的工作目录**为准；需要路径完全对齐时，让会话工作目录就是项目目录。
 
-**模型 key / 插件 / 技能没过去？** 这些**不同步**，也不该同步。两台机器各自配一次，这是唯一绕不过去的准备。
+**模型 key / 插件 / 技能没过去？** 这些**不同步**，也不该同步。每台机器各配一次，这是唯一绕不过去的准备。
 
 **两边都改了同一个会话？** 接力是「交棒」，不是实时协同。会话还在本机跑时会导入成副本，历史分叉会另开新会话，绝不静默合并。
 
-**仓库太大？** 长会话 + 大量截图会到几百 MB，建议阶段性新开会话，或定期清理旧项目。
+**仓库太大？** 长会话加大量截图会到几百 MB，建议阶段性新开会话，或定期清理旧项目。
 
-**push 认证失败？** 插件里所有 git 命令都禁用了交互提示，认证不通直接报错；先在终端手动 clone 一次确认凭据可用。
+**push 认证失败？** 插件里所有 git 命令都禁用了交互提示，认证不通直接报错；先在终端执行一次 `git ls-remote <仓库地址>` 确认凭据可用。
 
 ## 安全
 
-- 会话日志里可能有你粘贴过的密钥。relay 仓库**必须私有**。
-- 令牌不要写进 URL，用 credential helper；贴进聊天的令牌等于进了日志，用完就换。
-- 给别人 relay 访问权，等于给对方读你全部对话的权限。
+- 会话日志里可能有粘贴过的密钥，relay 仓库**必须私有**。
+- 令牌不要写进仓库 URL 或聊天记录，用 credential helper 或 SSH。
+- 给出 relay 访问权，等于给出读取全部对话的权限。
 
 ## 开发
 
@@ -142,4 +168,4 @@ dsh-hop/
 └── locale/           中英文名称与描述
 ```
 
-改完插件代码后要**先移除再安装**才会加载新的 JavaScript；只改 `client.js` 的话刷新页面即可。
+改完 host 代码需要先移除再安装才会加载新的 JavaScript；只改 `client.js` 刷新页面即可。

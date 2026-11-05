@@ -17,23 +17,74 @@ A DSH session is an **event log**: every turn, tool call, todo list (`todo_write
 
 ## Install
 
-1. Clone this repository anywhere.
+1. `git clone <this repository>` anywhere.
 2. Install it in DSH: `plugin_manager` → `install_bundle` → that directory.
-3. Reload the page (⌘R) and the **Relay** icon appears in the sidebar.
+3. Reload the page (⌘R); a **Relay** icon appears in the sidebar.
 
-## Configure (once per machine)
+## Setup
 
-Open the panel's **Set repository** control, or run:
+### 1. Create a private repository
+
+Create a **private** repository on GitHub or Gitee for relay state only, not project code. For example `dsh-hop-myrepo`.
+
+### 2. Let this machine access it
+
+If this machine already has git credentials configured (`git ls-remote <repo-url>` works without prompting), skip this step.
+
+**SSH**
+
+```bash
+ssh-keygen -t ed25519 -C "you@example.com"   # skip if a key already exists
+cat ~/.ssh/id_ed25519.pub
+```
+
+Add the public key on the platform:
+
+- GitHub: Settings → SSH and GPG keys → New SSH key
+- Gitee: Settings → SSH keys
+
+Verify:
+
+```bash
+ssh -T git@github.com     # or git@gitee.com
+```
+
+> A welcome message or `successfully authenticated` means it works; `Permission denied` means the key was not added correctly.
+
+**HTTPS with a token**
+
+```bash
+# macOS
+git config --global credential.helper osxkeychain
+# Windows
+git config --global credential.helper manager
+# Linux
+git config --global credential.helper libsecret
+
+printf 'protocol=https\nhost=github.com\nusername=<account>\npassword=<token>\n\n' | git credential approve
+```
+
+For Gitee use `host=gitee.com`. Create the token in the platform settings: GitHub needs `repo` scope, Gitee needs `projects`.
+
+Verify:
+
+```bash
+git ls-remote <repo-url>
+```
+
+Refs printed and no error means this machine can reach the repository.
+
+### 3. Enter it in the plugin
+
+Click **Set repository** in the panel, or run:
 
 ```
-/hop setup git@github.com:you/dsh-hop-myrepo.git
+/hop setup <repo-url>
 ```
+
+Saving clones once to verify. Authentication errors surface as git's own message (usually 401 / 403 / `Permission denied`) — fix step 2 and retry.
 
 Every project on this machine then shares that relay — no per-project setup.
-
-You need a **private** repository (GitHub or Gitee) for relay state only, not project code; both machines can `git clone` it without prompting (SSH key or credential helper); and both run the same DSH version.
-
-> Never paste a token into chat: hand it to `git credential` / the keychain. The plugin stores only the repository URL.
 
 ## Interface
 
@@ -51,31 +102,6 @@ After that it is a project list — click **Download**:
 
 > Illustrations; the real UI follows the active light/dark theme.
 
-## Credentials (the most common question)
-
-The plugin stores **only the repository URL — never a token**. What matters is whether this machine can `git clone` that repository directly.
-
-**SSH (recommended)**
-
-```bash
-ssh-keygen -t ed25519 -C "you@example.com"
-# add ~/.ssh/id_ed25519.pub to GitHub → Settings → SSH and GPG keys
-ssh -T git@github.com          # "successfully authenticated" means you are done
-```
-
-Gitee works the same: add the public key under Settings → SSH keys and test with `ssh -T git@gitee.com`.
-
-**HTTPS + token**
-
-```bash
-git config --global credential.helper osxkeychain
-printf 'protocol=https\nhost=github.com\nusername=your-name\npassword=your-token\n\n' | git credential approve
-```
-
-Then press **Save** in the panel: the plugin clones once to verify, and surfaces git's own error (usually 401/403 or `Permission denied`) if credentials are wrong.
-
-> Never paste tokens into chat or into URLs; keep them in the keychain or an SSH agent.
-
 ## Usage
 
 **Panel**: sidebar → **Relay** → the project list (green dot = present here, grey dot = not downloaded) → **Download**. Pulls run in the background; the panel polls progress and refreshes when done.
@@ -91,7 +117,7 @@ Then press **Save** in the panel: the plugin clones once to verify, and surfaces
 
 With a single project in the relay, `/hop pull` needs no argument. The default destination is `~/dsh-projects/<name>`.
 
-**Tools**: `hop_setup`, `hop_push`, `hop_pull`, `hop_list`, `hop_status` — or just say "hand this project off to my machine at home".
+**Tools**: `hop_setup`, `hop_push`, `hop_pull`, `hop_list`, `hop_status` — or just say "hand this project off to the other computer".
 
 **Sub-sessions**: push includes every subagent session spawned from the current one; pull rebuilds them parent-first.
 
@@ -112,11 +138,11 @@ Session bundles are compressed text (about 6MB for 157 turns); attachments are c
 
 ## FAQ
 
-**Code did not come along?** The project is not a git repository or has no `origin`; the plugin skips code sync and says so.
+**Code did not come along?** The project is not a git repository or has no `origin`; the plugin skips code sync and says so in its output.
 
 **Paths differ?** Pass a destination to pull, or use the default `~/dsh-projects/<name>`; old paths in the log are rewritten.
 
-**Project root vs. session working directory?** `--project` only affects code sync — session paths follow the **session's working directory**. Make the working directory the project directory for perfectly aligned paths.
+**Project root vs. session working directory?** `--project` only affects code sync — session paths follow the **session's working directory**. Make the working directory the project directory when paths must align exactly.
 
 **Model keys / plugins / skills missing?** They are **not synced**, and should not be. Configure each machine once; that is the only unavoidable setup step.
 
@@ -124,13 +150,13 @@ Session bundles are compressed text (about 6MB for 157 turns); attachments are c
 
 **Repository too large?** Long sessions with many screenshots reach hundreds of MB. Start fresh sessions periodically, or prune old projects.
 
-**push fails with an auth error?** Every git command runs with `GIT_TERMINAL_PROMPT=0`, so it fails fast. Clone the relay manually once to confirm the credentials work.
+**push fails with an auth error?** Every git command runs with `GIT_TERMINAL_PROMPT=0`, so it fails fast. Run `git ls-remote <repo-url>` once in a terminal to confirm the credentials work.
 
 ## Security
 
-- Session logs can contain secrets you pasted. The relay repository **must stay private**.
-- Do not put tokens in URLs; use a credential helper. A token pasted into chat is part of the session log — rotate it after use.
-- Anyone you give relay access to can read all of your conversations.
+- Session logs can contain pasted secrets; the relay repository **must stay private**.
+- Keep tokens out of repository URLs and chat logs; use a credential helper or SSH.
+- Granting relay access grants the ability to read every conversation.
 
 ## Development
 
