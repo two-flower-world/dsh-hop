@@ -54,7 +54,13 @@ async function runGit(args, cwd, extraEnv = {}) {
     const { stdout } = await execFileP('git', args, {
       cwd,
       maxBuffer: 64 * 1024 * 1024,
-      env: { ...process.env, GIT_TERMINAL_PROMPT: '0', ...extraEnv }
+      env: {
+        ...process.env,
+        GIT_TERMINAL_PROMPT: '0',
+        // 第一次连新主机时自动接受 host key（不改变已记录主机的校验）
+        GIT_SSH_COMMAND: process.env.GIT_SSH_COMMAND ?? 'ssh -o StrictHostKeyChecking=accept-new',
+        ...extraEnv
+      }
     })
     return stdout.trim()
   } catch (error) {
@@ -437,8 +443,10 @@ async function pullCode(root, remote, branchName) {
     await runGit(['reset', '--hard', '--quiet', target], root)
     return { target, mode: 'initial', stat }
   }
-  const ancestor = await execFileP('git', ['merge-base', '--is-ancestor', head, target], { cwd: root, env: { ...process.env, GIT_TERMINAL_PROMPT: '0' } })
-    .then(() => true, () => false)
+  const ancestor = await execFileP('git', ['merge-base', '--is-ancestor', head, target], {
+    cwd: root,
+    env: { ...process.env, GIT_TERMINAL_PROMPT: '0' }
+  }).then(() => true, () => false)
   if (ancestor) {
     await runGit(['reset', '--hard', '--quiet', target], root)
     return { target, mode: 'fast-forward', stat }
@@ -931,6 +939,7 @@ function providerOf(url) {
 
 function classifyGitFailure(message) {
   const text = String(message).toLowerCase()
+  if (/host key verification failed/.test(text)) return 'hostkey'
   if (/permission denied|publickey|authentication failed|could not read username|terminal prompts disabled|\b401\b|\b403\b/.test(text)) return 'auth'
   if (/repository .*not found|does not exist|not found|\b404\b/.test(text)) return 'notfound'
   if (/could not resolve host|connection (timed out|refused)|network is unreachable|timeout/.test(text)) return 'network'
