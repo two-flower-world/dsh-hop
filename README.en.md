@@ -4,6 +4,8 @@
 
 English | [中文](README.md)
 
+**Plugin version** `0.3.0` · **Requires DSH** `>= 0.2.1-rc.5`
+
 One private repository holds every project. `/hop push` on the work machine, one click on **Download** at home — sessions, todos, attachments and code travel together, and the conversation continues without re-briefing the model.
 
 ## What it solves
@@ -20,6 +22,8 @@ A DSH session is an **event log**: every turn, tool call, todo list (`todo_write
 1. `git clone <this repository>` anywhere.
 2. Install it in DSH: `plugin_manager` → `install_bundle` → that directory.
 3. Reload the page (⌘R); a **Relay** icon appears in the sidebar.
+
+> Requires DSH `>= 0.2.1-rc.5`; keep both machines on the same version — the session format follows DSH.
 
 ## Setup
 
