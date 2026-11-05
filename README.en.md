@@ -4,7 +4,7 @@
 
 English | [中文](README.md)
 
-**Plugin version** `0.3.0` · **Requires DSH** `>= 0.2.1-rc.5`
+**Plugin version** `0.4.0` · **Requires DSH** `>= 0.2.1-rc.5`
 
 One private repository holds every project. `/hop push` on the work machine, one click on **Download** at home — sessions, todos, attachments and code travel together, and the conversation continues without re-briefing the model.
 
@@ -18,6 +18,12 @@ A DSH session is an **event log**: every turn, tool call, todo list (`todo_write
 | Project code | The project's own git | Snapshot commit on `hop/<device>` |
 
 ## Install
+
+**Option 1: npm**
+
+In DSH's *Add plugin* dialog, enter `dsh-plugin-hop`, install, then reload the page (⌘R).
+
+**Option 2: from source**
 
 1. `git clone <this repository>` anywhere.
 2. Install it in DSH: `plugin_manager` → `install_bundle` → that directory.

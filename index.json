@@ -58,11 +58,9 @@
       "versions": [
         {
           "version": "0.4.0",
-          "publishTimestamp": 1793847283,
+          "publishTimestamp": 1793847846,
           "source": {
-            "type": "git",
-            "url": "https://gitee.com/two-flower-world/dsh-hop",
-            "commit": "79f3aa68f171f45c58f841fca2c699ca690c7083"
+            "type": "npm"
           },
           "engines": {
             "dsh": ">=0.2.1-rc.5"
